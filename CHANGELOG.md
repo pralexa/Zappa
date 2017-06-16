@@ -1,5 +1,8 @@
 # Zappa Changelog
 
+## 0.42.2
+* Fix copystat error
+
 ## 0.42.1
 * Small fixes for #918, #922, #803, #802, #799, #888, #903, #893, #828, #874, and others.
 * Support for manylinux wheels Python 3.6 package downloading.

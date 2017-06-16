@@ -20,6 +20,25 @@ else:
 # Settings / Packaging
 ##
 
+def copystat2(src, dst):
+    """Copy all stat info (mode bits, atime, mtime, flags) from src to dst"""
+    st = os.stat(src)
+    mode = stat.S_IMODE(st.st_mode)
+    if hasattr(os, 'utime'):
+        os.utime(dst, (st.st_atime, st.st_mtime))
+    if hasattr(os, 'chmod'):
+        os.chmod(dst, mode)
+    if hasattr(os, 'chflags') and hasattr(st, 'st_flags'):
+        try:
+            os.chflags(dst, st.st_flags)
+        except OSError, why:
+            for err in 'EOPNOTSUPP', 'ENOTSUP', 'EPERM':
+                if hasattr(errno, err) and why.errno == getattr(errno, err):
+                    break
+            else:
+                raise
+
+
 def copytree(src, dst, symlinks=False, ignore=None):
     """
     This is a contributed re-implementation of 'copytree' that
@@ -29,7 +48,7 @@ def copytree(src, dst, symlinks=False, ignore=None):
 
     if not os.path.exists(dst):
         os.makedirs(dst)
-        shutil.copystat(src, dst)
+        copystat2(src, dst)
     lst = os.listdir(src)
 
     if ignore:
@@ -53,7 +72,8 @@ def copytree(src, dst, symlinks=False, ignore=None):
         elif os.path.isdir(s):
             copytree(s, d, symlinks, ignore)
         else:
-            shutil.copy2(s, d)
+            shutil.copy(s, d)
+            copystat2(s, d)
 
 def parse_s3_url(url):
     """
@@ -363,7 +383,7 @@ def validate_name(name, maxlen=80):
 
 def contains_python_files_or_subdirs(folder):
     """
-    Checks (recursively) if the directory contains .py or .pyc files 
+    Checks (recursively) if the directory contains .py or .pyc files
     """
     for root, dirs, files in os.walk(folder):
         if [filename for filename in files if filename.endswith('.py') or filename.endswith('.pyc')]:
