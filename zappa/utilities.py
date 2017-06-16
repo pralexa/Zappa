@@ -8,6 +8,7 @@ import re
 import shutil
 import stat
 import sys
+import errno
 
 from past.builtins import basestring
 
